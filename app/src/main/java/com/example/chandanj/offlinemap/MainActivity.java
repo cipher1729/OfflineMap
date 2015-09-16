@@ -15,29 +15,49 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
     Button button;
     TextView textView;
-    List<Helper.Route> routeList;
+    List<Route> routeList;
+    float dist;
+    float time;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         button = (Button) findViewById(R.id.queryButton);
-        textView =  (TextView) findViewById(R.id.textView);
-
-
+        textView = (TextView) findViewById(R.id.textView);
+        dist = 0;
+        time = 0;
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                String jsonData =HttpManager.getData("https://maps.googleapis.com/maps/api/directions/json?origin=Toronto&destination=Montreal&key=AIzaSyC9M0AmyxoajATobugixlWFd26f7kUKhkc");
+                String jsonData = HttpManager.getData("https://maps.googleapis.com/maps/api/directions/json?origin=Toronto&destination=Montreal&key=AIzaSyC9M0AmyxoajATobugixlWFd26f7kUKhkc");
                 routeList = JSONParser.parse(jsonData);
-
+                Log.d("", "");
             }
         };
 
-        new Thread(runnable).start();
+        Thread routeThread = new Thread(runnable);
+        routeThread.start();
+        try {
+            routeThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
-    }
-
-
+        for (int i = 0; i < routeList.size(); i++) {
+            for (int j = 0; j < routeList.get(i).legs.length; j++) {
+                for (int k = 0; k < routeList.get(i).legs[j].steps.length; k++) {
+                    String distString = routeList.get(i).legs[j].steps[k].distance;
+                    String durationString = routeList.get(i).legs[j].steps[k].duration;
+                    String[] routeSplit = distString.split("[ ]");
+                    dist += Float.parseFloat(routeSplit[0]);
+                    routeSplit = durationString.split("[ ]");
+                    time += Float.parseFloat(routeSplit[0]);
+                }
+            }
+        }
+        float timeInHours = time / 60;
+        
+}
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
