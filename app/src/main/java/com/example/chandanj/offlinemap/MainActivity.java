@@ -24,7 +24,8 @@ import java.util.Timer;
 public class MainActivity extends AppCompatActivity {
     Button startButton, stopButton, fromButton, toButton;
     ListView listView;
-    //public static TextView textView;
+    public TextView fromTextView, toTextView;
+    public static TextView statusTextView;
     public static List<Route> routeList;
     public static long dist, trackerDist;
     public static long time, trackerTime;
@@ -46,6 +47,9 @@ public class MainActivity extends AppCompatActivity {
         fromButton = (Button) findViewById(R.id.fromBtn);
         toButton = (Button) findViewById(R.id.toBtn);
         listView = (ListView) findViewById(R.id.listView);
+        fromTextView = (TextView) findViewById(R.id.fromTextView);
+        toTextView = (TextView) findViewById(R.id.toTextView);
+        statusTextView = (TextView) findViewById(R.id.statusTextView);
         //textView = (TextView) findViewById(R.id.textView);
         dist = 0;
         time = 0;
@@ -65,7 +69,6 @@ public class MainActivity extends AppCompatActivity {
                 for(int i=0;i<routeList.get(0).legs[0].steps.length;i++)
                 {
                     valueList.add(routeList.get(0).legs[0].steps[i].distance + "   " + routeList.get(0).legs[0].steps[i].duration);
-
                 }
 
                 arrayAdapter= new ArrayAdapter<String>(MainActivity.this,android.R.layout.simple_list_item_1,android.R.id.text1, valueList);
@@ -73,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         listView.setAdapter(arrayAdapter);
+                        statusTextView.setText("Timer " +String.valueOf(keepScheduling) + " with next values "+ routeList.get(0).legs[0].steps[0].distance + " "+ routeList.get(0).legs[0].steps[0].duration );
                     }
                 };
                 runOnUiThread(listViewRunnable);
@@ -187,6 +191,8 @@ public class MainActivity extends AppCompatActivity {
 
             if(fromPlace!=null && toPlace!=null) {
                 Thread routeThread = new Thread(runnable);
+                fromTextView.setText(fromPlace);
+                toTextView.setText(toPlace);
                 routeThread.start();
                 try {
                     routeThread.join();
@@ -194,6 +200,7 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
+
             /*final CharSequence name = place.getName();
             final CharSequence address = place.getAddress();
             String attributions = PlacePicker.getAttributions(data);

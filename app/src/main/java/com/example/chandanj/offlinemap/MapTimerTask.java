@@ -58,6 +58,7 @@ public class MapTimerTask  extends TimerTask{
                     NotificationManager mNotificationManager =
                             (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
                     mNotificationManager.notify(stepTracker,mBuilder.build());
+                    MainActivity.statusTextView.setText("Timer " +String.valueOf(keepScheduling) + " with next values "+ MainActivity.routeList.get(0).legs[0].steps[stepTracker].distance + " "+ MainActivity.routeList.get(0).legs[0].steps[stepTracker].duration );
                     timer.schedule(new MapTimerTask(context,stepTracker, timer, keepScheduling),MainActivity.trackerTime);
                 }
             }
