@@ -82,8 +82,8 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(listViewRunnable);
                 //textView.setText(routeList.get(0).legs[0].steps[0].duration);
                 Timer timer= new Timer();
-                timer.schedule(new MapTimerTask(getApplicationContext(),stepTracker, timer, keepScheduling),trackerTime);
-
+                long alertTime = Utils.alertTime(MainActivity.routeList.get(0).legs[0].steps[0].duration);
+                timer.schedule(new MapTimerTask(getApplicationContext(),stepTracker, timer, keepScheduling),trackerTime-alertTime);
             }
         };
 

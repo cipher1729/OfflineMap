@@ -33,4 +33,23 @@ public class Utils {
         }
             return durationInMilliseconds;
     }
+
+    public static long alertTime(String duration) {
+        //no alert if 1 minute
+        long alertTime = 0;
+        String[] routeSplit = duration.split("[ ]");
+        if (routeSplit.length == 2) {
+            //30 mins
+            if (routeSplit[1].equals("mins"))
+                alertTime = 1 * 60 * 1000;      //1 min alert time
+            //2 hours
+            if (routeSplit[1].equals("hours") || routeSplit[1].equals("hour"))
+                alertTime = 5 * 60 * 1000;      //5 minute alert time
+        }
+        //5 hours 2 mins
+        else if (routeSplit.length == 4) {
+            alertTime = 5 * 60 * 1000;      //5 minute alert time }
+        }
+        return alertTime;
+    }
 }

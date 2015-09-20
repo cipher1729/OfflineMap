@@ -48,6 +48,7 @@ public class MapTimerTask  extends TimerTask{
                     keepScheduling= false;
                 if(keepScheduling)
                 {
+
                     MainActivity.trackerDist = Utils.parseDistance(MainActivity.routeList.get(0).legs[0].steps[stepTracker].distance);
                     MainActivity.trackerTime = Utils.parseDuration(MainActivity.routeList.get(0).legs[0].steps[stepTracker].duration);
                     //MainActivity.textView.setText(MainActivity.routeList.get(0).legs[0].steps[stepTracker].duration);
@@ -59,7 +60,8 @@ public class MapTimerTask  extends TimerTask{
                             (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
                     mNotificationManager.notify(stepTracker,mBuilder.build());
                     MainActivity.statusTextView.setText("Timer " +String.valueOf(keepScheduling) + " with next values "+ MainActivity.routeList.get(0).legs[0].steps[stepTracker].distance + " "+ MainActivity.routeList.get(0).legs[0].steps[stepTracker].duration );
-                    timer.schedule(new MapTimerTask(context,stepTracker, timer, keepScheduling),MainActivity.trackerTime);
+                    long alertTime = Utils.alertTime(MainActivity.routeList.get(0).legs[0].steps[stepTracker].duration);
+                    timer.schedule(new MapTimerTask(context,stepTracker, timer, keepScheduling),MainActivity.trackerTime - alertTime);
                 }
             }
         });
