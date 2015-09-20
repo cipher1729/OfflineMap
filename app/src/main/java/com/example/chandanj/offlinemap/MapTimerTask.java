@@ -50,7 +50,7 @@ public class MapTimerTask  extends TimerTask{
                 {
                     MainActivity.trackerDist = Utils.parseDistance(MainActivity.routeList.get(0).legs[0].steps[stepTracker].distance);
                     MainActivity.trackerTime = Utils.parseDuration(MainActivity.routeList.get(0).legs[0].steps[stepTracker].duration);
-                    MainActivity.textView.setText(MainActivity.routeList.get(0).legs[0].steps[stepTracker].duration);
+                    //MainActivity.textView.setText(MainActivity.routeList.get(0).legs[0].steps[stepTracker].duration);
                     NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context)
                             .setSmallIcon(R.drawable.notification_template_icon_bg)
                             .setContentTitle(MainActivity.routeList.get(0).legs[0].steps[stepTracker].distance)

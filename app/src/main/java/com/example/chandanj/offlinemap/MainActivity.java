@@ -1,5 +1,7 @@
 package com.example.chandanj.offlinemap;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -8,18 +10,25 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlacePicker;
+
 import java.util.List;
 import java.util.Timer;
 
 public class MainActivity extends AppCompatActivity {
-    Button startButton, stopButton;
-    public static TextView textView;
+    Button startButton, stopButton, fromButton, toButton;
+    //public static TextView textView;
     public static List<Route> routeList;
     public static long dist, trackerDist;
     public static long time, trackerTime;
     long currentTime;
     boolean keepScheduling= true;
-
+    int REQUEST_FROM_PLACE_PICKER=1;
+    int REQUEST_TO_PLACE_PICKER=2;
+    String fromPlace, toPlace, fromLat, fromLong, toLat, toLong;
     //to keep track of which leg is currrently being processed
     int stepTracker;
     @Override
@@ -28,32 +37,38 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         startButton = (Button) findViewById(R.id.startBtn);
         stopButton = (Button) findViewById(R.id.stopBtn);
-        textView = (TextView) findViewById(R.id.textView);
+        fromButton = (Button) findViewById(R.id.fromBtn);
+        toButton = (Button) findViewById(R.id.toBtn);
+
+        //textView = (TextView) findViewById(R.id.textView);
         dist = 0;
         time = 0;
+        addGUIListeners();
+
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                String jsonData = HttpManager.getData("https://maps.googleapis.com/maps/api/directions/json?origin=33.308625,-111.942314&destination=33.305269,-111.944652&key=AIzaSyC9M0AmyxoajATobugixlWFd26f7kUKhkc&units=metric&mode=driving");
+                String jsonData = HttpManager.getData("https://maps.googleapis.com/maps/api/directions/json?origin="+fromLat+","+fromLong+"&destination="+toLat+","+toLong+"&key=AIzaSyC9M0AmyxoajATobugixlWFd26f7kUKhkc&units=metric&mode=driving");
                 routeList = JSONParser.parse(jsonData);
                 stepTracker=0;
                 trackerDist= Utils.parseDistance(routeList.get(0).legs[0].steps[0].distance);
                 trackerTime = Utils.parseDuration(routeList.get(0).legs[0].steps[0].duration);
-                textView.setText(routeList.get(0).legs[0].steps[0].duration);
+                //textView.setText(routeList.get(0).legs[0].steps[0].duration);
                 Timer timer= new Timer();
                 timer.schedule(new MapTimerTask(getApplicationContext(),stepTracker, timer, keepScheduling),trackerTime);
 
             }
         };
 
-        Thread routeThread = new Thread(runnable);
-        routeThread.start();
-        try {
-            routeThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
+         if(fromPlace!=null && toPlace!=null) {
+             Thread routeThread = new Thread(runnable);
+             routeThread.start();
+             try {
+                 routeThread.join();
+             } catch (InterruptedException e) {
+                 e.printStackTrace();
+             }
+         }
         /*
         Totals
         for (int i = 0; i < routeList.size(); i++) {
@@ -67,8 +82,19 @@ public class MainActivity extends AppCompatActivity {
                     time += Float.parseFloat(routeSplit[0]);
                 }
             }
-        }*/
+        }
         float timeInHours = time / 60;
+        */
+
+
+    }
+
+    private void startTracking() {
+
+    }
+
+    private void addGUIListeners()
+    {
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -76,10 +102,86 @@ public class MainActivity extends AppCompatActivity {
                 startTracking();
             }
         });
+        fromButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                PlacePicker.IntentBuilder intentBuilder = new PlacePicker.IntentBuilder();
+                try {
+                    Intent intent = intentBuilder.build(MainActivity.this);
+                    startActivityForResult(intent, REQUEST_FROM_PLACE_PICKER);
+                } catch (GooglePlayServicesRepairableException e) {
+                    e.printStackTrace();
+                } catch (GooglePlayServicesNotAvailableException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        toButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                PlacePicker.IntentBuilder intentBuilder = new PlacePicker.IntentBuilder();
+                try {
+                    Intent intent = intentBuilder.build(MainActivity.this);
+                    startActivityForResult(intent, REQUEST_TO_PLACE_PICKER);
+                } catch (GooglePlayServicesRepairableException e) {
+                    e.printStackTrace();
+                } catch (GooglePlayServicesNotAvailableException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
     }
 
-    private void startTracking() {
+    @Override
+    protected void onActivityResult(int requestCode,
+                                    int resultCode, Intent data) {
 
+        if (requestCode == REQUEST_FROM_PLACE_PICKER
+                && resultCode == Activity.RESULT_OK) {
+
+            // The user has selected a place. Extract the name and address.
+            final Place place = PlacePicker.getPlace(data, this);
+            fromPlace = String.valueOf(place.getName());
+            fromLat = String.valueOf(place.getLatLng().latitude);
+            fromLong = String.valueOf(place.getLatLng().longitude);
+            /*final CharSequence name = place.getName();
+            final CharSequence address = place.getAddress();
+            String attributions = PlacePicker.getAttributions(data);
+            if (attributions == null) {
+                attributions = "";
+            }*/
+           /* mViewName.setText(name);
+            mViewAddress.setText(address);
+            mViewAttributions.setText(Html.fromHtml(attributions));*/
+
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+
+
+        if (requestCode == REQUEST_TO_PLACE_PICKER
+                && resultCode == Activity.RESULT_OK) {
+
+            // The user has selected a place. Extract the name and address.
+            final Place place = PlacePicker.getPlace(data, this);
+            toPlace = String.valueOf(place.getName());
+            toLat = String.valueOf(place.getLatLng().latitude);
+            toLong = String.valueOf(place.getLatLng().longitude);
+            /*final CharSequence name = place.getName();
+            final CharSequence address = place.getAddress();
+            String attributions = PlacePicker.getAttributions(data);
+            if (attributions == null) {
+                attributions = "";
+            }*/
+           /* mViewName.setText(name);
+            mViewAddress.setText(address);
+            mViewAttributions.setText(Html.fromHtml(attributions));*/
+
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
     }
 
     @Override
