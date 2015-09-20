@@ -7,7 +7,9 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
@@ -15,11 +17,13 @@ import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlacePicker;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 
 public class MainActivity extends AppCompatActivity {
     Button startButton, stopButton, fromButton, toButton;
+    ListView listView;
     //public static TextView textView;
     public static List<Route> routeList;
     public static long dist, trackerDist;
@@ -29,6 +33,8 @@ public class MainActivity extends AppCompatActivity {
     int REQUEST_FROM_PLACE_PICKER=1;
     int REQUEST_TO_PLACE_PICKER=2;
     String fromPlace, toPlace, fromLat, fromLong, toLat, toLong;
+    ArrayAdapter<String> arrayAdapter;
+    Runnable runnable;
     //to keep track of which leg is currrently being processed
     int stepTracker;
     @Override
@@ -39,13 +45,13 @@ public class MainActivity extends AppCompatActivity {
         stopButton = (Button) findViewById(R.id.stopBtn);
         fromButton = (Button) findViewById(R.id.fromBtn);
         toButton = (Button) findViewById(R.id.toBtn);
-
+        listView = (ListView) findViewById(R.id.listView);
         //textView = (TextView) findViewById(R.id.textView);
         dist = 0;
         time = 0;
         addGUIListeners();
 
-        Runnable runnable = new Runnable() {
+        runnable = new Runnable() {
             @Override
             public void run() {
                 String jsonData = HttpManager.getData("https://maps.googleapis.com/maps/api/directions/json?origin="+fromLat+","+fromLong+"&destination="+toLat+","+toLong+"&key=AIzaSyC9M0AmyxoajATobugixlWFd26f7kUKhkc&units=metric&mode=driving");
@@ -53,6 +59,23 @@ public class MainActivity extends AppCompatActivity {
                 stepTracker=0;
                 trackerDist= Utils.parseDistance(routeList.get(0).legs[0].steps[0].distance);
                 trackerTime = Utils.parseDuration(routeList.get(0).legs[0].steps[0].duration);
+                //generate strings list
+                ArrayList<String> valueList= new ArrayList<>();
+
+                for(int i=0;i<routeList.get(0).legs[0].steps.length;i++)
+                {
+                    valueList.add(routeList.get(0).legs[0].steps[i].distance + "   " + routeList.get(0).legs[0].steps[i].duration);
+
+                }
+
+                arrayAdapter= new ArrayAdapter<String>(MainActivity.this,android.R.layout.simple_list_item_1,android.R.id.text1, valueList);
+                Runnable listViewRunnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        listView.setAdapter(arrayAdapter);
+                    }
+                };
+                runOnUiThread(listViewRunnable);
                 //textView.setText(routeList.get(0).legs[0].steps[0].duration);
                 Timer timer= new Timer();
                 timer.schedule(new MapTimerTask(getApplicationContext(),stepTracker, timer, keepScheduling),trackerTime);
@@ -60,15 +83,7 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
-         if(fromPlace!=null && toPlace!=null) {
-             Thread routeThread = new Thread(runnable);
-             routeThread.start();
-             try {
-                 routeThread.join();
-             } catch (InterruptedException e) {
-                 e.printStackTrace();
-             }
-         }
+
         /*
         Totals
         for (int i = 0; i < routeList.size(); i++) {
@@ -169,6 +184,16 @@ public class MainActivity extends AppCompatActivity {
             toPlace = String.valueOf(place.getName());
             toLat = String.valueOf(place.getLatLng().latitude);
             toLong = String.valueOf(place.getLatLng().longitude);
+
+            if(fromPlace!=null && toPlace!=null) {
+                Thread routeThread = new Thread(runnable);
+                routeThread.start();
+                try {
+                    routeThread.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
             /*final CharSequence name = place.getName();
             final CharSequence address = place.getAddress();
             String attributions = PlacePicker.getAttributions(data);
