@@ -1,37 +1,48 @@
 package com.example.chandanj.offlinemap;
 
-import android.content.Intent;
-import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
 import java.util.List;
+import java.util.Timer;
 
 public class MainActivity extends AppCompatActivity {
-    Button button;
-    TextView textView;
-    List<Route> routeList;
-    float dist;
-    float time;
+    Button startButton, stopButton;
+    public static TextView textView;
+    public static List<Route> routeList;
+    public static long dist, trackerDist;
+    public static long time, trackerTime;
+    long currentTime;
+    boolean keepScheduling= true;
+
+    //to keep track of which leg is currrently being processed
+    int stepTracker;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        button = (Button) findViewById(R.id.queryButton);
+        startButton = (Button) findViewById(R.id.startBtn);
+        stopButton = (Button) findViewById(R.id.stopBtn);
         textView = (TextView) findViewById(R.id.textView);
         dist = 0;
         time = 0;
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                String jsonData = HttpManager.getData("https://maps.googleapis.com/maps/api/directions/json?origin=Toronto&destination=Montreal&key=AIzaSyC9M0AmyxoajATobugixlWFd26f7kUKhkc");
+                String jsonData = HttpManager.getData("https://maps.googleapis.com/maps/api/directions/json?origin=33.308625,-111.942314&destination=33.305269,-111.944652&key=AIzaSyC9M0AmyxoajATobugixlWFd26f7kUKhkc&units=metric&mode=driving");
                 routeList = JSONParser.parse(jsonData);
-                Log.d("", "");
+                stepTracker=0;
+                trackerDist= Utils.parseDistance(routeList.get(0).legs[0].steps[0].distance);
+                trackerTime = Utils.parseDuration(routeList.get(0).legs[0].steps[0].duration);
+                textView.setText(routeList.get(0).legs[0].steps[0].duration);
+                Timer timer= new Timer();
+                timer.schedule(new MapTimerTask(getApplicationContext(),stepTracker, timer, keepScheduling),trackerTime);
+
             }
         };
 
@@ -43,6 +54,8 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+        /*
+        Totals
         for (int i = 0; i < routeList.size(); i++) {
             for (int j = 0; j < routeList.get(i).legs.length; j++) {
                 for (int k = 0; k < routeList.get(i).legs[j].steps.length; k++) {
@@ -54,10 +67,21 @@ public class MainActivity extends AppCompatActivity {
                     time += Float.parseFloat(routeSplit[0]);
                 }
             }
-        }
+        }*/
         float timeInHours = time / 60;
-        
-}
+        startButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                currentTime = System.currentTimeMillis();
+                startTracking();
+            }
+        });
+    }
+
+    private void startTracking() {
+
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
